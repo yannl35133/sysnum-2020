@@ -1,28 +1,39 @@
 open Graph
 
-let rec check l = match l with
-  | [] | [_] -> true
-  | s1::s2::l -> (String.length s1 <= String.length s2) && (check (s2::l))
+type graph' = int list array
 
-let test_good () =
+let g1 = [| [1]; [1]; [1] |]
+let g2 = [| []; [2]; [3]; [4]; [0; 1]; |]
+let g3 = [| [1]; [2]; [3] |]
+let g4 = [| [3]; [0; 2; 4]; [3]; []; [6]; [1; 4; 7]; [3; 8]; [6; 9]; []; [8] |]
+
+let tests : (graph' * bool) list = [g1, true; g2, true; g3, false; g4, false]
+
+let graph_of_graph' a =
   let g = mk_graph () in
-  add_node g "1"; add_node g "21"; add_node g "22"; add_node g "333";
-  add_edge g "1" "21"; add_edge g "1" "22";
-  add_edge g "21" "333"; add_edge g "22" "333";
-  let l = topological g in
-  print_string "Test: Tri topologique --> ";
-  if check l then print_endline "OK" else print_endline "FAIL";
-  List.iter print_endline l;
-  print_newline ()
+  for i = 0 to Array.length a - 1 do
+    add_node g i
+  done;
+  Array.iteri (fun src -> List.iter (add_edge g src)) a;
+  g
 
-let test_cycle () =
-  let g = mk_graph () in
-  add_node g "1"; add_node g "2"; add_node g "3";
-  add_edge g "1" "2"; add_edge g "2" "3"; add_edge g "3" "1";
-  print_string "Test: Detection de cycle --> ";
-  if has_cycle g then print_endline "OK" else print_endline "FAIL"
-;;
 
-test_cycle ();;
-test_good ();;
+let check_topo_on g =
+  let l = topological (graph_of_graph' g) in
+  let inverse_l = Array.map (fun _ -> 0) g in
+  List.iteri (fun i node -> inverse_l.(node) <- i) l;
+  Array.for_all Fun.id (Array.mapi (fun i lst -> List.for_all (fun dst -> inverse_l.(i) < inverse_l.(dst)) lst) g)
+
+
+let test i (g, b) =
+  let g' = graph_of_graph' g in
+
+  Format.printf "Test %d:\n- has_cycle: %s\n topological_sort: %s\n"
+    i
+    (if has_cycle g' = b then "OK" else "FAIL")
+    (try if check_topo_on g then "OK" else "FAIL"
+    with Cycle -> if b then "OK" else "FAIL (no cycle here)"
+    | e -> Format.eprintf "The detection of a cycle should raise the Cycle exception; otherwise, fix this one\n"; raise e)
+
+let () = List.iteri test tests
 
