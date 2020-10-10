@@ -16,6 +16,7 @@ let compile filename =
         | Scheduler.Combinational_cycle ->
             Format.eprintf "The netlist has a combinatory cycle.@.";
             close_all (); exit 2
+        | e -> Format.eprintf "The detection of a combinatorial cycle should raise the Combinatorial_cycle exception; otherwise, fix this one@."; raise e
     end;
     close_all ();
     if not !print_only then (
@@ -28,7 +29,7 @@ let compile filename =
       ignore (Unix.system (simulator^" "^out_name))
     )
   with
-    | Netlist.Parse_error s -> Format.eprintf "An error accurred: %s@." s; exit 2
+    | Netlist.Parse_error s -> Format.eprintf "An error occurred: %s@." s; exit 2
 
 let main () =
   Arg.parse

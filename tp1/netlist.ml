@@ -17,7 +17,7 @@ let read_file filename =
   try
     Netlist_parser.program Netlist_lexer.token lexbuf
   with
-    | e ->
+    | _ ->
         let loc = Format.sprintf "line %d, column %d"
           lexbuf.lex_curr_p.pos_lnum
           (lexbuf.lex_curr_p.pos_cnum - lexbuf.lex_curr_p.pos_bol)
