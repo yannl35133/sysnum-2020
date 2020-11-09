@@ -20,18 +20,15 @@ let print_list print lp sep rp ff = function
       fprintf ff "%s" rp
 
 let print_ty ff ty = match ty with
-  | TBit -> ()
   | TBitArray n -> fprintf ff " : %d" n
 
-let print_bool ff b =
-  if b then
-    fprintf ff "1"
-  else
-    fprintf ff "0"
+let print_wire fmt = function
+  | On ->           fprintf fmt "1"
+  | Off ->          fprintf fmt "0"
+  | Unstabilized -> fprintf fmt "u"
 
 let print_value ff v = match v with
-  | VBit b -> print_bool ff b
-  | VBitArray a -> Array.iter (print_bool ff) a
+  | VBitArray a -> Array.iter (print_wire ff) a
 
 let print_arg ff arg = match arg with
   | Aconst v -> print_value ff v

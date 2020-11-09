@@ -1,15 +1,16 @@
 %{
  open Netlist_ast
 
- let bool_of_string s = match s with
-  | "t" | "1" -> true
-  | "f" | "0" -> false
+ let wire_of_string s = match s with
+  | "t" | "1" -> On
+  | "f" | "0" -> Off
+  | "u"       -> Unstabilized
   | _ -> raise Parsing.Parse_error
 
- let bool_array_of_string s =
-   let a = Array.make (String.length s) false in
+ let wire_array_of_string s =
+   let a = Array.make (String.length s) Unstabilized in
    for i = 0 to String.length s - 1 do
-     a.(i) <- bool_of_string (String.sub s i 1)
+     a.(i) <- wire_of_string (String.sub s i 1)
    done;
    a
 
@@ -17,10 +18,8 @@
    let n = String.length s in
    if n = 0 then
      raise Parsing.Parse_error
-   else if n = 1 then
-     VBit (bool_of_string s)
    else
-     VBitArray (bool_array_of_string s)
+     VBitArray (wire_array_of_string s)
 %}
 
 %token <string> CONST
@@ -69,7 +68,7 @@ arg:
 
 var: x=NAME ty=ty_exp { (x, ty) }
 ty_exp:
-  | /*empty*/ { TBit }
+  | /*empty*/   { TBitArray 1 }
   | COLON n=int { TBitArray n }
 
 int:
