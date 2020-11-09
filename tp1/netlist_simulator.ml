@@ -4,7 +4,7 @@ let print_only = ref false
 let number_steps = ref (10)
 let debug = ref true
 let init_value = ref Off
-
+let filename = ref ""
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
@@ -14,7 +14,7 @@ let print_output env x =
 
 let print_memories x a =
   if Array.length a > 0 then
-    Format.printf "Memory for variable %s : %a\n" x (Netlist_printer.print_list Netlist_printer.print_value "[|""; ""|]") (Array.to_list a)
+    Format.printf "Memory for variable %s : %a\n" x (Netlist_printer.print_list Netlist_printer.print_value "[| ""; "" |]") (Array.to_list a)
 
 let init_wires n = VBitArray (Array.make n !init_value)
 let unstable_wires n = VBitArray (Array.make n Unstabilized)
@@ -202,8 +202,9 @@ let compile filename =
 let main () =
   Arg.parse
     ["-n", Arg.Set_int number_steps, "Number of steps to simulate"; "-debug", Arg.Set debug, "Activate debug mode"]
-    compile
-    ""
+    (fun s -> filename := s)
+    "";
+    compile !filename
 ;;
 
 main ()
