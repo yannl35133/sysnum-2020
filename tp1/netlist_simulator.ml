@@ -205,6 +205,6 @@ let main () =
     (fun s -> filename := s)
     "";
     compile !filename
-;;
 
-main ()
+
+let () = main ()
