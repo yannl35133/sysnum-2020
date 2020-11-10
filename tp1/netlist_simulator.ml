@@ -1,5 +1,7 @@
 open Netlist_ast
 
+exception Simulation_error of string
+
 let debug = ref false
 let init_value = ref Off
 
@@ -80,14 +82,12 @@ let compute_unop a =
 
 
 let compute_mux a b c =
+  if Array.length !!b <> Array.length !!c then
+    raise (Simulation_error (Format.sprintf "MUX outputs do not have the same size, %d <> %d" (Array.length !!b) (Array.length !!c)));
   match extract_bit a with
-  | On ->  b
-  | Off -> c
-  | Unstabilized ->
-      if Array.length !!b <> Array.length !!c then
-        failwith "Wrong arity"
-      else
-        unstable_wires (Array.length !!b)
+  | Off ->          b
+  | On ->           c
+  | Unstabilized -> unstable_wires (Array.length !!b)
 
 
 let compute_exp env memory = function
@@ -102,9 +102,11 @@ let compute_exp env memory = function
   | Econcat (a, b) ->
       concat (compute_arg env a) (compute_arg env b)
   | Eslice (i, j, a) -> 
-      VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
+      begin try assert (j - i + 1 > 0); VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
+      with Assert_failure _ | Invalid_argument _ -> raise (Simulation_error (Format.sprintf "SLICE indexes invalid, [%d, %d] not sub [0, %d-1] or empty" i j (Array.length !!(compute_arg env a)))) end
   | Eselect (i, a) ->
-      VBitArray (Array.make 1 !!(compute_arg env a).(i))
+      begin try VBitArray (Array.make 1 !!(compute_arg env a).(i))
+      with Invalid_argument _ -> raise (Simulation_error (Format.sprintf "SELECT index is out of bounds, %d >= %d" i (Array.length !!(compute_arg env a)))) end
   | Ereg _ ->
       memory.(0)
   | Erom (_, ws, ra) -> begin
@@ -175,6 +177,8 @@ let simulator ~debug:debug0 ~init program number_steps =
   for i = 1 to if number_steps < 0 then max_int else number_steps do
     Format.printf "## Step number %d\n" i;
     let env = List.fold_left input Env.empty program.p_inputs in
+    if List.length program.p_inputs > 0 then
+      Format.printf "\n";
     let env' = linear_update memories env program in
     memory_writes memories env' program;
     if !debug then

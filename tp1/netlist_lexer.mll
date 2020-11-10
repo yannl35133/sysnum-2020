@@ -31,7 +31,7 @@ let alphanum = alpha | digit | ['-' ''' '_']
 
 rule token = parse
   | '\n'                              { new_line lexbuf; token lexbuf }     (* skip blanks *)
-  | [' ' '\t']                        { token lexbuf }     (* skip blanks *)
+  | [' ' '\t']                        { token lexbuf }                      (* skip blanks *)
   | "="                               { EQUAL }
   | ":"                               { COLON }
   | ","                               { COMMA }

@@ -1,0 +1,8 @@
+INPUT z
+OUTPUT x
+VAR
+    a, x, y, z:0
+IN
+y = REG x
+a = NOT y
+x = RAM 1 1 y 1 y a
