@@ -1,10 +1,7 @@
 open Netlist_ast
 
-let print_only = ref false
-let number_steps = ref (10)
-let debug = ref true
+let debug = ref false
 let init_value = ref Off
-let filename = ref ""
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
@@ -84,7 +81,7 @@ let compute_unop a =
 
 let compute_mux a b c =
   match extract_bit a with
-  | On -> b
+  | On ->  b
   | Off -> c
   | Unstabilized ->
       if Array.length !!b <> Array.length !!c then
@@ -163,7 +160,9 @@ let get_input env n x =
   Env.add x (VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))) env
 
 
-let simulator program number_steps =
+let simulator ~debug:debug0 ~init program number_steps =
+  init_value := init;
+  debug := debug0;
   let input env x =
     match Env.find x program.p_vars with
     | TBitArray n -> get_input env n x
@@ -185,26 +184,3 @@ let simulator program number_steps =
     Format.printf "\n";
   done
 
-
-let compile filename =
-  try
-    let p = Netlist.read_file filename in
-    begin try
-        let p = Scheduler.schedule p in
-        simulator p !number_steps
-      with
-        | Scheduler.Combinational_cycle ->
-            Format.eprintf "The netlist has a combinatory cycle.@.";
-    end;
-  with
-    | Netlist.Parse_error s -> Format.eprintf "An error occurred: %s@." s; exit 2
-
-let main () =
-  Arg.parse
-    ["-n", Arg.Set_int number_steps, "Number of steps to simulate"; "-debug", Arg.Set debug, "Activate debug mode"]
-    (fun s -> filename := s)
-    "";
-    compile !filename
-
-
-let () = main ()
