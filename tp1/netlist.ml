@@ -5,15 +5,9 @@ exception Parse_error of string
 
 let print_only = ref false
 let number_steps = ref (10)
-let debug = ref true
+let debug = ref false
 let init_value = ref Off
 let filename = ref ""
-
-let find_file filename =
-  try
-    open_in filename
-  with
-    | _ -> raise (Parse_error ("No such file '"^filename^"%s'"))
 
 (* Localize an error given its beginning and ending positions *)
 let localisation fmt (pos1, pos2) =
@@ -30,7 +24,7 @@ let read_file ?(raise_error=None) filename =
       match raise_error with
       | Some e -> raise e
       | None ->
-          Format.eprintf "Error: file %s has not been found" filename;
+          Format.eprintf "Error: file \"%s\" has not been found@." filename;
           exit 1
 
 

@@ -1,6 +1,5 @@
 (executables
- (names graph_test scheduler_test netlist_simulator)
- (promote (until-clean))
+ (names graph_test scheduler_test netlist)
  (libraries unix)
  (modes byte exe))
 

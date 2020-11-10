@@ -175,7 +175,6 @@ let simulator ~debug:debug0 ~init program number_steps =
   for i = 1 to if number_steps < 0 then max_int else number_steps do
     Format.printf "## Step number %d\n" i;
     let env = List.fold_left input Env.empty program.p_inputs in
-    Format.printf "\n";
     let env' = linear_update memories env program in
     memory_writes memories env' program;
     if !debug then
