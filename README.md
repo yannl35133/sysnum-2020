@@ -31,3 +31,6 @@ Enfin, un typeur a été ajouté. Il vérifie la bonne déclaration des variable
 
 Le simulateur tourne environ deux fois moins vite que la version compilée fournie en entrée. En effet, là n'était pas le but. C'est un simulateur qui fait des vérifications initiales et n'est pas du tout optimisé pour la vitesse. Je le transformerai peut-être en compilateur vers C, mais je dois d'abord fixer la syntaxe des netlists que je me laisse le droit de modifier.
 
+## Git
+
+Le simulateur a git pour un contrôleur de version. Il est hébergé sur (github)[https://github.com/yannl35133/sysnum-2020/tree/job-done]
