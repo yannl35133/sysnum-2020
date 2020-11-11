@@ -4,7 +4,7 @@ open Netlist_ast
 exception Parse_error of string
 
 let print_only = ref false
-let number_steps = ref (10)
+let number_steps = ref (-1)
 let debug = ref false
 let init_value = ref Off
 let filename = ref ""
@@ -46,6 +46,9 @@ let compile filename =
     Typer.check program;
 
     let scheduled_program = Scheduler.schedule program in
+
+    if !number_steps < 0 then
+      number_steps := max_int;
 
     if !print_only then
       print_program stdout program

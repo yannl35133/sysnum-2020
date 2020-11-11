@@ -172,7 +172,7 @@ let simulator ~debug:debug0 ~init program number_steps =
   let memories = init_mem program in
     
   (* RAM / ROM *)
-  for i = 1 to if number_steps < 0 then max_int else number_steps do
+  for i = 1 to number_steps do
     Format.printf "## Step number %d\n" i;
     let env = List.fold_left input Env.empty program.p_inputs in
     if List.length program.p_inputs > 0 then
