@@ -2,15 +2,16 @@
 
 ## Compiler et exécuter
 
-Via dune (le simulateur est écrit en OCaml) : `dune build`
+- Compilation: via dune (le simulateur est écrit en OCaml) : `dune build`
 
-Il suffit même de faire `dune exec ./netlist.exe TEST_FILE`
-
+- Exécution: via dune encore une fois (cette commande ne nécessite pas la précédente) `dune exec src/netlist.exe [OPTIONS] TEST_FILE`  
 Les tests sont dans le dossier `test`
+
+- Accéder aux exécutables : Ajouter la ligne `(promote (until-clean))` au fichier `dune`, dans le champ `executables`, puis rebuild.
 
 ### Arguments de l'exécutable
 
-Le simulateur accepte les arguments :
+Le simulateur accepte les options :
 -   `--print-only` (explicite),
 -   `--debug` (dump les valeurs des variables et les états des mémoires à chaque étape),
 -   `-n NUMBER` (lance la simulation pendant `NUMBER` cycles, défaut: `max_int` de OCaml),
@@ -33,4 +34,4 @@ Le simulateur tourne environ deux fois moins vite que la version compilée fourn
 
 ## Git
 
-Le simulateur a git pour un contrôleur de version. Il est hébergé sur (github)[https://github.com/yannl35133/sysnum-2020/tree/job-done]
+Le simulateur a git pour un contrôleur de version. Il est hébergé sur [Github](https://github.com/yannl35133/sysnum-2020/tree/job-done). L'historique est probablement assez malpropre et peu agréable pour naviguer entre les versions.
