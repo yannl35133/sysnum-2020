@@ -6,6 +6,8 @@ Via dune (c'est en OCaml) : `dune build`
 
 Il suffit même de faire `dune exec ./netlist.exe TEST_FILE`
 
+Les tests sont dans le dossier `test`
+
 ### Arguments de l'exécutable
 
 Le simulateur accepte les arguments :
