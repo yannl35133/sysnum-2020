@@ -102,11 +102,9 @@ let compute_exp env memory = function
   | Econcat (a, b) ->
       concat (compute_arg env a) (compute_arg env b)
   | Eslice (i, j, a) -> 
-      begin try assert (j - i + 1 > 0); VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
-      with Assert_failure _ | Invalid_argument _ -> raise (Simulation_error (Format.sprintf "SLICE indexes invalid, [%d, %d] not sub [0, %d-1] or empty" i j (Array.length !!(compute_arg env a)))) end
+      VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
   | Eselect (i, a) ->
-      begin try VBitArray (Array.make 1 !!(compute_arg env a).(i))
-      with Invalid_argument _ -> raise (Simulation_error (Format.sprintf "SELECT index is out of bounds, %d >= %d" i (Array.length !!(compute_arg env a)))) end
+      VBitArray (Array.make 1 !!(compute_arg env a).(i))
   | Ereg _ ->
       memory.(0)
   | Erom (_, ws, ra) -> begin
@@ -149,7 +147,7 @@ let memory_writes memories env p =
   List.iter update_mem p.p_eqs
 
 let get_input env n x =
-  let size_prompt = if n > 1 then
+  let size_prompt = if n <> 1 then
     Format.sprintf "(size %d) " n
     else ""
   in

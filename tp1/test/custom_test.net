@@ -1,8 +1,13 @@
 INPUT z
 OUTPUT x
 VAR
-    a, x, y, z:0
+    a:2, x:2, y:2, z:0, s, t, u, v:2, w:2
 IN
 y = REG x
-a = NOT y
-x = RAM 1 1 y 1 y a
+s = SELECT 0 y
+t = NAND s u
+u = SELECT 1 x
+a = CONCAT s t
+v = XOR x w
+w = REG v
+x = RAM 2 2 y 1 v a
