@@ -2,7 +2,7 @@
 
 ## Compiler et exécuter
 
-Via dune (c'est en OCaml) : `dune build`
+Via dune (le simulateur est écrit en OCaml) : `dune build`
 
 Il suffit même de faire `dune exec ./netlist.exe TEST_FILE`
 
