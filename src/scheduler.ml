@@ -12,15 +12,15 @@ let rec deps_exp = function
   | Eslice (_, _, a) ->                         deps_arg a
   | Eselect (_, a) ->                           deps_arg a
   | Ereg _ ->                                   []
-  | Erom (_, _, ra) ->                          deps_arg ra
-  | Eram (_, _, ra, _we, _wa, _wi) ->           deps_arg ra
+  | Erom (_, _, _, ra) ->                       deps_arg ra
+  | Eram (_, _, _, ra, _we, _wa, _wi) ->        deps_arg ra
 
 
 and deps_arg = function
   | Aconst _ -> []
   | Avar id ->  [id]
 
- 
+
 let schedule p =
   let g = mk_graph () in
 
@@ -35,4 +35,3 @@ let schedule p =
   in
   let rev_ordered_eqs : equation list = List.filter_map (fun a -> List.find_opt (fun (a', _) -> a = a') p.p_eqs) rev_ordered_idents in
   { p with p_eqs = List.rev rev_ordered_eqs }
- 

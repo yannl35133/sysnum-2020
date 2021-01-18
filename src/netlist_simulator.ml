@@ -4,6 +4,7 @@ exception Simulation_error of string
 
 let debug = ref false
 let init_value = ref Off
+let file_dir = ref ""
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
@@ -26,8 +27,21 @@ let init_mem p =
           match Env.find a p.p_vars with
           | TBitArray n -> init_wires n
           )
-    | Erom (m, n, _) ->           Array.make (1 lsl m) (init_wires n)
-    | Eram (m, n, _, _, _, _) ->  Array.make (1 lsl m) (init_wires n)
+    | Erom (m, n, file, _)
+    | Eram (m, n, file, _, _, _, _) -> begin
+        let a = Array.make (1 lsl m) (init_wires n) in
+        match file with
+        | None -> a
+        | Some file -> try
+            let f = open_in (Filename.concat (!file_dir) file) in
+            for i = 0 to (1 lsl m) - 1 do
+              let s = really_input_string f (n+1) in
+              if s.[n] <> '\n' then raise (Sys_error "In memory files, separate words with a newline");
+              a.(i) <- VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))
+            done;
+            a
+          with Sys_error s -> Format.eprintf "%s" s; a
+        end
     | Earg _|Enot _|Ebinop (_, _, _)|Emux (_, _, _)|Econcat (_, _)|Eslice (_, _, _)|Eselect _ ->
                                   Array.make 0 (init_wires 0)
     in
@@ -107,12 +121,12 @@ let compute_exp env memory = function
       VBitArray (Array.make 1 !!(compute_arg env a).(i))
   | Ereg _ ->
       memory.(0)
-  | Erom (_, ws, ra) -> begin
+  | Erom (_, ws, _, ra) -> begin
       match to_int @@ compute_arg env ra with
       | Some n -> memory.(n)
       | None   -> unstable_wires ws  (* Corrupted input *)
       end
-  | Eram (_, ws, ra, _, _, _) -> begin
+  | Eram (_, ws, _, ra, _, _, _) -> begin
       match to_int @@ compute_arg env ra with
       | Some n -> memory.(n)
       | None   -> unstable_wires ws  (* Corrupted input *)
@@ -121,7 +135,7 @@ let compute_exp env memory = function
 let compute_writes env memory = function
   | Earg _ | Enot _ | Ebinop _ | Emux _ | Econcat _ | Eslice _ | Eselect _ | Erom _ -> ()
   | Ereg x -> memory.(0) <- compute_arg env (Avar x)
-  | Eram (_, ws, _, w_flag, wa, data) ->
+  | Eram (_, ws, _, _, w_flag, wa, data) ->
       match extract_bit @@ compute_arg env w_flag, to_int @@ compute_arg env wa with
       | On, Some n ->           memory.(n) <- compute_arg env data
       | Off, _ ->               ()
@@ -151,7 +165,7 @@ let get_input env n x =
     Format.sprintf "(size %d) " n
     else ""
   in
-  Format.printf "Input value for %s %s: " x size_prompt;
+  Format.printf "Input value for %s %s: @." x size_prompt;
   Format.print_flush ();
   let s = Scanf.scanf "%s\n" (fun x -> x) in
   if String.length s <> n then failwith "Wrong length";
@@ -160,9 +174,10 @@ let get_input env n x =
   Env.add x (VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))) env
 
 
-let simulator ~debug:debug0 ~init program number_steps =
+let simulator ~debug:debug0 ~init file_dir0 program number_steps =
   init_value := init;
   debug := debug0;
+  file_dir := file_dir0;
   let input env x =
     match Env.find x program.p_vars with
     | TBitArray n -> get_input env n x

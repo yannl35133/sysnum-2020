@@ -39,6 +39,7 @@ let print_program = Netlist_printer.print_program
 
 let compile filename =
   let ic = read_file filename in
+  let file_dir = Filename.dirname filename in
   let lexbuf = from_channel ic in
   try
     let program = Netlist_parser.program Netlist_lexer.token lexbuf in
@@ -53,7 +54,7 @@ let compile filename =
     if !print_only then
       print_program stdout program
     else
-      Netlist_simulator.simulator ~debug:!debug ~init:!init_value scheduled_program !number_steps
+      Netlist_simulator.simulator ~debug:!debug ~init:!init_value file_dir scheduled_program !number_steps
   with
     | Netlist_parser.Error ->
         Format.eprintf "@[<v>%a@ Syntax error@]@."
@@ -63,7 +64,7 @@ let compile filename =
     | Scheduler.Combinational_cycle ->
         Format.eprintf "Error: the netlist has a dependency cycle@.";
         exit 1
-    
+
     | Netlist_simulator.Simulation_error s ->
         Format.eprintf "Simulation error: %s@." s;
         exit 1

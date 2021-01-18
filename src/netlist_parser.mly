@@ -24,6 +24,7 @@
 
 %token <string> CONST
 %token <string> NAME
+%token <string> FILE
 %token AND MUX NAND OR RAM ROM XOR REG NOT
 %token CONCAT SELECT SLICE
 %token COLON ":" EQUAL "=" COMMA ","
@@ -52,9 +53,10 @@ exp:
   | SELECT idx=int x=arg            { Eselect (idx, x) }
   | SLICE min=int max=int x=arg     { Eslice (min, max, x) }
   | REG x=NAME                      { Ereg x }
-  | ROM addr=int word=int ra=arg    { Erom (addr, word, ra) }
-  | RAM addr=int word=int ra=arg we=arg wa=arg data=arg
-                                    { Eram (addr, word, ra, we, wa, data) }
+  | ROM addr=int word=int file=FILE? ra=arg
+                                    { Erom (addr, word, file, ra) }
+  | RAM addr=int word=int file=FILE? ra=arg we=arg wa=arg data=arg
+                                    { Eram (addr, word, file, ra, we, wa, data) }
 
 %inline binop:
   | AND                             { And }
