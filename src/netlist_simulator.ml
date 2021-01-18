@@ -7,7 +7,7 @@ let init_value = ref Off
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
-  
+
 let print_output env x =
   print_variable x (Env.find x env)
 
@@ -46,7 +46,7 @@ let extract_bit a =
   else
     !!a.(0)
 
-let to_int a = 
+let to_int a =
   Array.fold_right
     (fun b acc -> match b, acc with
       | On, Some acc  -> Some (2 * acc + 1)
@@ -71,7 +71,7 @@ let compute_binop op a b =
   if Array.length !!a = Array.length !!b then
     VBitArray (Array.map2 f !!a !!b)
   else failwith "Wrong arity"
-  
+
 let compute_unop a =
   let f = (function
     | On -> Off
@@ -101,7 +101,7 @@ let compute_exp env memory = function
       compute_mux (compute_arg env a) (compute_arg env b) (compute_arg env c)
   | Econcat (a, b) ->
       concat (compute_arg env a) (compute_arg env b)
-  | Eslice (i, j, a) -> 
+  | Eslice (i, j, a) ->
       VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
   | Eselect (i, a) ->
       VBitArray (Array.make 1 !!(compute_arg env a).(i))
@@ -119,7 +119,7 @@ let compute_exp env memory = function
       end
 
 let compute_writes env memory = function
-  | Earg _ | Enot _ | Ebinop _ | Emux _ | Econcat _ | Eslice _ | Eselect _ | Erom _ -> ()  
+  | Earg _ | Enot _ | Ebinop _ | Emux _ | Econcat _ | Eslice _ | Eselect _ | Erom _ -> ()
   | Ereg x -> memory.(0) <- compute_arg env (Avar x)
   | Eram (_, ws, _, w_flag, wa, data) ->
       match extract_bit @@ compute_arg env w_flag, to_int @@ compute_arg env wa with
@@ -170,10 +170,10 @@ let simulator ~debug:debug0 ~init program number_steps =
 
   (* Initialize memory cells *)
   let memories = init_mem program in
-    
+
   (* RAM / ROM *)
   for i = 1 to number_steps do
-    Format.printf "## Step number %d\n" i;
+    Format.printf "## Step number %d@." i;
     let env = List.fold_left input Env.empty program.p_inputs in
     if List.length program.p_inputs > 0 then
       Format.printf "\n";
