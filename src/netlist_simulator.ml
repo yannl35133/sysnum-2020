@@ -7,7 +7,7 @@ let init_value = ref Off
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
-  
+
 let print_output env x =
   print_variable x (Env.find x env)
 
@@ -26,8 +26,30 @@ let init_mem p =
           match Env.find a p.p_vars with
           | TBitArray n -> init_wires n
           )
-    | Erom (m, n, _) ->           Array.make (1 lsl m) (init_wires n)
-    | Eram (m, n, _, _, _, _) ->  Array.make (1 lsl m) (init_wires n)
+    | Erom (m, n, file, _) -> begin
+      let a = Array.make (1 lsl m) (init_wires n) in
+      match file with
+      | None -> a
+      | Some file -> try
+          let f = open_in file in
+          for i = 0 to (1 lsl m) - 1 do
+            a.(i) <- VBitArray (Array.init n (fun i -> let s = really_input_string f n in if s.[i] = '1' then On else Off ))
+          done;
+          a
+        with Sys_error _ -> a
+      end
+    | Eram (m, n, file, _, _, _, _) -> begin
+        let a = Array.make (1 lsl m) (init_wires n) in
+        match file with
+        | None -> a
+        | Some file -> try
+            let f = open_in file in
+            for i = 0 to (1 lsl m) - 1 do
+              a.(i) <- VBitArray (Array.init n (fun i -> let s = really_input_string f n in if s.[i] = '1' then On else Off ))
+            done;
+            a
+          with Sys_error _ -> a
+        end
     | Earg _|Enot _|Ebinop (_, _, _)|Emux (_, _, _)|Econcat (_, _)|Eslice (_, _, _)|Eselect _ ->
                                   Array.make 0 (init_wires 0)
     in
@@ -46,7 +68,7 @@ let extract_bit a =
   else
     !!a.(0)
 
-let to_int a = 
+let to_int a =
   Array.fold_right
     (fun b acc -> match b, acc with
       | On, Some acc  -> Some (2 * acc + 1)
@@ -71,7 +93,7 @@ let compute_binop op a b =
   if Array.length !!a = Array.length !!b then
     VBitArray (Array.map2 f !!a !!b)
   else failwith "Wrong arity"
-  
+
 let compute_unop a =
   let f = (function
     | On -> Off
@@ -101,27 +123,27 @@ let compute_exp env memory = function
       compute_mux (compute_arg env a) (compute_arg env b) (compute_arg env c)
   | Econcat (a, b) ->
       concat (compute_arg env a) (compute_arg env b)
-  | Eslice (i, j, a) -> 
+  | Eslice (i, j, a) ->
       VBitArray (Array.sub !!(compute_arg env a) i (j - i + 1))
   | Eselect (i, a) ->
       VBitArray (Array.make 1 !!(compute_arg env a).(i))
   | Ereg _ ->
       memory.(0)
-  | Erom (_, ws, ra) -> begin
+  | Erom (_, ws, _, ra) -> begin
       match to_int @@ compute_arg env ra with
       | Some n -> memory.(n)
       | None   -> unstable_wires ws  (* Corrupted input *)
       end
-  | Eram (_, ws, ra, _, _, _) -> begin
+  | Eram (_, ws, _, ra, _, _, _) -> begin
       match to_int @@ compute_arg env ra with
       | Some n -> memory.(n)
       | None   -> unstable_wires ws  (* Corrupted input *)
       end
 
 let compute_writes env memory = function
-  | Earg _ | Enot _ | Ebinop _ | Emux _ | Econcat _ | Eslice _ | Eselect _ | Erom _ -> ()  
+  | Earg _ | Enot _ | Ebinop _ | Emux _ | Econcat _ | Eslice _ | Eselect _ | Erom _ -> ()
   | Ereg x -> memory.(0) <- compute_arg env (Avar x)
-  | Eram (_, ws, _, w_flag, wa, data) ->
+  | Eram (_, ws, _, _, w_flag, wa, data) ->
       match extract_bit @@ compute_arg env w_flag, to_int @@ compute_arg env wa with
       | On, Some n ->           memory.(n) <- compute_arg env data
       | Off, _ ->               ()
@@ -151,7 +173,7 @@ let get_input env n x =
     Format.sprintf "(size %d) " n
     else ""
   in
-  Format.printf "Input value for %s %s: " x size_prompt;
+  Format.printf "Input value for %s %s: @." x size_prompt;
   Format.print_flush ();
   let s = Scanf.scanf "%s\n" (fun x -> x) in
   if String.length s <> n then failwith "Wrong length";
@@ -170,7 +192,7 @@ let simulator ~debug:debug0 ~init program number_steps =
 
   (* Initialize memory cells *)
   let memories = init_mem program in
-    
+
   (* RAM / ROM *)
   for i = 1 to number_steps do
     Format.printf "## Step number %d\n" i;

@@ -28,6 +28,7 @@ let () = List.iter (fun (k, v) -> Hashtbl.add keyword_table k v)
 let digit = ['0'-'9']
 let alpha = ['a'-'z' 'A'-'Z']
 let alphanum = alpha | digit | ['-' ''' '_']
+let filename = alphanum | '.'
 
 rule token = parse
   | '\n'                              { new_line lexbuf; token lexbuf }     (* skip blanks *)
@@ -36,6 +37,7 @@ rule token = parse
   | ":"                               { COLON }
   | ","                               { COMMA }
   | digit+ as lxm                     { CONST lxm }
+  | "\"" (filename+ as file) "\""     { FILE file }
   | ('_' ? alpha alphanum* as id)     { try Hashtbl.find keyword_table id
                                         with Not_found -> NAME id }
   | eof                               { EOF }

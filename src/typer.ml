@@ -1,7 +1,7 @@
 open Netlist_ast
 
 let check program =
-  
+
   let print_var fmt = function
     | Avar id -> Format.fprintf fmt "%s" id
     | Aconst a -> Format.fprintf fmt "%a" Netlist_printer.print_value a
@@ -12,23 +12,23 @@ let check program =
     | Aconst VBitArray a -> Array.length a
   in
   Option.fold ~none:()
-    ~some:(fun name -> Format.eprintf "Input variable \"%s\" has not been found among declared variables@." name; exit 1) 
+    ~some:(fun name -> Format.eprintf "Input variable \"%s\" has not been found among declared variables@." name; exit 1)
     (List.find_opt (fun e -> not @@ Env.mem e program.p_vars) program.p_inputs);
 
   Option.fold ~none:()
-    ~some:(fun name -> Format.eprintf "Output variable \"%s\" has not been found among declared variables@." name; exit 1) 
+    ~some:(fun name -> Format.eprintf "Output variable \"%s\" has not been found among declared variables@." name; exit 1)
     (List.find_opt (fun e -> not @@ Env.mem e program.p_vars) program.p_outputs);
-    
+
   Option.fold ~none:()
-    ~some:(fun (name, _) -> Format.eprintf "Equation left-hand side \"%s\" has not been found among declared variables@." name; exit 1) 
+    ~some:(fun (name, _) -> Format.eprintf "Equation left-hand side \"%s\" has not been found among declared variables@." name; exit 1)
     (List.find_opt (fun (e, _) -> not @@ Env.mem e program.p_vars) program.p_eqs);
 
   let env' = Env.of_list program.p_eqs in
   Option.fold ~none:()
-    ~some:(fun (name, _) -> Format.eprintf "Variable \"%s\" does not have a definition@." name; exit 1) 
+    ~some:(fun (name, _) -> Format.eprintf "Variable \"%s\" does not have a definition@." name; exit 1)
     (Env.find_first_opt (fun e -> not @@ (Env.mem e env' || List.mem e program.p_inputs )) program.p_vars);
-  
-  let check_var id = 
+
+  let check_var id =
     if not @@ Env.mem id program.p_vars then
       Format.eprintf "Referenced variable \"%s\" has not been found among declared variables@." id
   in
@@ -40,13 +40,13 @@ let check program =
   in
 
   let rec check_eq_vars = function
-    | Erom (_, _, Avar id)  | Eslice (_, _, Avar id) | Eselect (_, Avar id)
+    | Erom (_, _, _, Avar id)  | Eslice (_, _, Avar id) | Eselect (_, Avar id)
     | Earg Avar id | Ereg id | Enot Avar id -> check_var id
     | Ebinop (_, id1, id2) -> List.iter check_eq_vars [Enot id1; Enot id2]
     | Econcat (id1, id2) ->
         List.iter check_eq_vars [Enot id1; Enot id2]
     | Emux (id0, id1, id2) -> List.iter check_eq_vars [Enot id0; Enot id1; Enot id2]
-    | Eram (_, _, id1, id2, id3, id4) -> List.iter check_eq_vars [Enot id1; Enot id2; Enot id3; Enot id4]
+    | Eram (_, _, _, id1, id2, id3, id4) -> List.iter check_eq_vars [Enot id1; Enot id2; Enot id3; Enot id4]
     | _ -> ()
   in
 
@@ -76,8 +76,8 @@ let check program =
         if i < 0 || i >= n then begin
           Format.eprintf "In \"%s\"'s definition, SELECT index invalid, %d not in [0, %d-1]@." lhs i n;
         exit 1 end;
-        assert_same_size (Format.asprintf "%a" print_var a) 1 lhs (get_size (Avar lhs))    
-    | Eram (addr, ws, ra, we, wa, data) ->
+        assert_same_size (Format.asprintf "%a" print_var a) 1 lhs (get_size (Avar lhs))
+    | Eram (addr, ws, _, ra, we, wa, data) ->
         assert_same_size (Format.asprintf "%a" print_var ra) (get_size ra) lhs addr;
         assert_same_size (Format.asprintf "%a" print_var we) (get_size we) lhs 1;
         assert_same_size (Format.asprintf "%a" print_var wa) (get_size wa) lhs addr;
@@ -86,7 +86,7 @@ let check program =
           Format.eprintf "In \"%s\"'s definition, value %d was expected to be %d@." lhs ws (get_size (Avar lhs));
           exit 1
         end
-    | Erom (addr, ws, ra) ->
+    | Erom (addr, ws, _, ra) ->
         assert_same_size (Format.asprintf "%a" print_var ra) (get_size ra) lhs addr;
         if (get_size (Avar lhs)) <> ws then begin
           Format.eprintf "In \"%s\"'s definition, value %d was expected to be %d@." lhs ws (get_size (Avar lhs));
