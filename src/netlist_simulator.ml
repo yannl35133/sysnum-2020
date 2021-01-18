@@ -4,6 +4,7 @@ exception Simulation_error of string
 
 let debug = ref false
 let init_value = ref Off
+let file_dir = ref ""
 
 let print_variable x value =
   Format.printf "Output value for %s : %a\n" x Netlist_printer.print_value value
@@ -26,29 +27,19 @@ let init_mem p =
           match Env.find a p.p_vars with
           | TBitArray n -> init_wires n
           )
-    | Erom (m, n, file, _) -> begin
-      let a = Array.make (1 lsl m) (init_wires n) in
-      match file with
-      | None -> a
-      | Some file -> try
-          let f = open_in file in
-          for i = 0 to (1 lsl m) - 1 do
-            a.(i) <- VBitArray (Array.init n (fun i -> let s = really_input_string f n in if s.[i] = '1' then On else Off ))
-          done;
-          a
-        with Sys_error _ -> a
-      end
+    | Erom (m, n, file, _)
     | Eram (m, n, file, _, _, _, _) -> begin
         let a = Array.make (1 lsl m) (init_wires n) in
         match file with
         | None -> a
         | Some file -> try
-            let f = open_in file in
+            let f = open_in (Filename.concat (!file_dir) file) in
             for i = 0 to (1 lsl m) - 1 do
-              a.(i) <- VBitArray (Array.init n (fun i -> let s = really_input_string f n in if s.[i] = '1' then On else Off ))
+              let s = really_input_string f n in
+              a.(i) <- VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))
             done;
             a
-          with Sys_error _ -> a
+          with Sys_error s -> Format.eprintf "%s" s; a
         end
     | Earg _|Enot _|Ebinop (_, _, _)|Emux (_, _, _)|Econcat (_, _)|Eslice (_, _, _)|Eselect _ ->
                                   Array.make 0 (init_wires 0)
@@ -182,9 +173,10 @@ let get_input env n x =
   Env.add x (VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))) env
 
 
-let simulator ~debug:debug0 ~init program number_steps =
+let simulator ~debug:debug0 ~init file_dir0 program number_steps =
   init_value := init;
   debug := debug0;
+  file_dir := file_dir0;
   let input env x =
     match Env.find x program.p_vars with
     | TBitArray n -> get_input env n x
