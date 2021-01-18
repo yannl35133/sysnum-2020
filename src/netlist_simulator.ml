@@ -35,7 +35,8 @@ let init_mem p =
         | Some file -> try
             let f = open_in (Filename.concat (!file_dir) file) in
             for i = 0 to (1 lsl m) - 1 do
-              let s = really_input_string f n in
+              let s = really_input_string f (n+1) in
+              if s.[n] <> '\n' then raise (Sys_error "In memory files, separate words with a newline");
               a.(i) <- VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))
             done;
             a
