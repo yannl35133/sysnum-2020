@@ -186,7 +186,7 @@ let simulator ~debug:debug0 ~init file_dir0 input_file program number_steps =
   file_dir := file_dir0;
   let get_input = match input_file with
   | None -> get_input
-  | Some f -> get_input_file (open_in f)
+  | Some f -> get_input_file (open_in (Filename.concat (!file_dir) f))
   in
   let input env x =
     match Env.find x program.p_vars with
