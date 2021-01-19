@@ -8,6 +8,7 @@ let number_steps = ref (-1)
 let debug = ref false
 let init_value = ref Off
 let filename = ref ""
+let input_file = ref None
 
 (* Localize an error given its beginning and ending positions *)
 let localisation fmt (pos1, pos2) =
@@ -54,7 +55,7 @@ let compile filename =
     if !print_only then
       print_program stdout program
     else
-      Netlist_simulator.simulator ~debug:!debug ~init:!init_value file_dir scheduled_program !number_steps
+      Netlist_simulator.simulator ~debug:!debug ~init:!init_value file_dir !input_file scheduled_program !number_steps
   with
     | Netlist_parser.Error ->
         Format.eprintf "@[<v>%a@ Syntax error@]@."
@@ -75,6 +76,7 @@ let main () =
       "-n", Arg.Set_int number_steps, "Number of steps to simulate";
       "-u", Arg.Unit (fun () -> init_value := Unstabilized), "Initialises the wires to an unstable state";
       "-i", Arg.Unit (fun () -> init_value := On), "Initialises the wires to 1";
+      "--input", Arg.String (fun s -> input_file := Some s), "Get inputs from a file";
       "--debug", Arg.Set debug, "Activate debug mode";
       "--print-only", Arg.Set print_only, "Print the netlist and return"
     ]

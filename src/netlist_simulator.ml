@@ -173,11 +173,21 @@ let get_input env n x =
 
   Env.add x (VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))) env
 
+let get_input_file f env n x =
 
-let simulator ~debug:debug0 ~init file_dir0 program number_steps =
+  let s = really_input_string f (n+1) in
+  if s.[n] <> '\n' then raise (Sys_error "In memory files, separate words with a newline");
+  Env.add x (VBitArray (Array.init n (fun i -> if s.[i] = '1' then On else Off ))) env
+
+
+let simulator ~debug:debug0 ~init file_dir0 input_file program number_steps =
   init_value := init;
   debug := debug0;
   file_dir := file_dir0;
+  let get_input = match input_file with
+  | None -> get_input
+  | Some f -> get_input_file (open_in f)
+  in
   let input env x =
     match Env.find x program.p_vars with
     | TBitArray n -> get_input env n x
@@ -188,7 +198,7 @@ let simulator ~debug:debug0 ~init file_dir0 program number_steps =
 
   (* RAM / ROM *)
   for i = 1 to number_steps do
-    Format.printf "## Step number %d@." i;
+    Format.printf "## Step number %d\n" i;
     let env = List.fold_left input Env.empty program.p_inputs in
     if List.length program.p_inputs > 0 then
       Format.printf "\n";
